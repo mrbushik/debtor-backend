@@ -55,7 +55,7 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  verifyOwnership(tokenId: string, id: string) {
+  verifyOwnership(tokenId: string, id?: string) {
     if (tokenId !== id) {
       throw ApiError.AccessRightsError();
     }

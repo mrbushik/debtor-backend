@@ -7,7 +7,6 @@ export class DepositService {
       return depositsArr;
     }
 
-
     return depositsArr.reduce((acc, deposit) => acc + deposit.depositAmount, 0);
   }
 }
