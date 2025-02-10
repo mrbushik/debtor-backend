@@ -31,15 +31,16 @@ export class DebtController {
   ): Promise<void> {
     try {
       const { id } = req.params;
-
       const currentDebt = await debtService.getCurrentDebt(id);
+      console.log('token info')
+      console.log(req.tokenData.id)
       authService.verifyOwnership(
         req.tokenData.id,
         currentDebt?.lenderId || "",
       );
       res.status(200).json(currentDebt);
     } catch (error) {
-      console.log(error);
+      next(error);
     }
   }
 

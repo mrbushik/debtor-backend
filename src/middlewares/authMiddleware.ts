@@ -24,16 +24,18 @@ function asyncMiddleware(
 
 export const authMiddleware = asyncMiddleware(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const token = req.cookies.accessToken;
 
-    if (!token) {
-      throw ApiError.UnauthorizedError();
-    }
 
     try {
+        const token = req.cookies.accessToken;
+        console.log(token)
+        if (!token) {
+            throw ApiError.UnauthorizedError();
+        }
       const decoded = jwt.verify(token, process.env.ACCESS_SECRET || "") as {
         userId: string;
       }; // Укажите тип декодированного токена
+        console.log(decoded)
       req.tokenData = decoded;
       next();
     } catch (error) {

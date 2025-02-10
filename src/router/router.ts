@@ -32,6 +32,8 @@ router.get(
 router.get("/overview/:id", authMiddleware, DebtController.getOverview);
 router.get("/analytics/:id", authMiddleware, DebtController.debtsAnalytics);
 router.get("/current-debt/:id", authMiddleware, DebtController.getCurrentDebt);
+router.get("/refresh", AuthController.updateTokens);
+router.get("/logout", AuthController.logout)
 
 router.post("/register", AuthController.registration);
 router.post("/login", AuthController.login);

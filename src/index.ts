@@ -16,8 +16,8 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(
   cors({
-    origin: "https://localhost:4200", // Фронтенд
-    credentials: true, // Разрешает куки
+    origin: "https://localhost:4200",
+    credentials: true,
   }),
 );
 app.use((req, res, next) => {
