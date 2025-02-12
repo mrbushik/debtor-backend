@@ -3,6 +3,10 @@ import { DebtModel, IDebt } from "../models/debtModel";
 import { DebtService } from "../services/debtService/debtService";
 import { DepositService } from "../services/depositService/depositService";
 import { AuthService } from "../services/authService/authService";
+import { UsersModel } from "../models/userModel";
+import jwt from "jsonwebtoken";
+import { ApiError } from "../exceptions/ApiErrors";
+import { DepositModel } from "../models/depositModel";
 
 const debtService = new DebtService();
 const depositService = new DepositService();
@@ -32,8 +36,8 @@ export class DebtController {
     try {
       const { id } = req.params;
       const currentDebt = await debtService.getCurrentDebt(id);
-      console.log('token info')
-      console.log(req.tokenData.id)
+      console.log("token info");
+      console.log(req.tokenData.id);
       authService.verifyOwnership(
         req.tokenData.id,
         currentDebt?.lenderId || "",
@@ -232,6 +236,212 @@ export class DebtController {
       );
 
       res.status(200).json({ message: "Debt removed" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getTokenForDebtor(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const { id } = req.params;
+      const { debtorName } = req.body;
+      const date = new Date().toISOString().split("T")[0];
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 90);
+      const expireDate = futureDate.toISOString().split("T")[0];
+
+      authService.verifyOwnership(req.tokenData.id, id || "");
+
+      const user: any = await UsersModel.findById(id);
+
+      if (!user) {
+        throw ApiError.BadRequest(`user didn't exist`);
+      }
+
+      const currentDebtor: any = user.debtorsTokens.find(
+        (token: any) => token.debtorName === debtorName,
+      );
+
+      if (currentDebtor) {
+        await UsersModel.findByIdAndUpdate(id, {
+          $pull: { debtorsTokens: { debtorName: debtorName } },
+        });
+      }
+
+      const token = jwt.sign(
+        {
+          id: user._id,
+          debtorName: debtorName,
+          createdDate: date,
+          expireDate: expireDate,
+        },
+        process.env.JWT_SECRET || "",
+        { expiresIn: "90d" },
+      );
+
+      const data = {
+        debtorName: debtorName,
+        token: token,
+        createdDate: date,
+        expireDate: expireDate,
+      };
+
+      const updatedUser: any = await UsersModel.findByIdAndUpdate(
+        { _id: id },
+        { $push: { debtorsTokens: data } },
+      );
+
+      if (!updatedUser && !updatedUser.debtorsTokens) {
+        throw ApiError.BadRequest(`user update error`);
+      }
+
+      const userData: any = await UsersModel.findById(id);
+
+      res.status(200).json(userData.debtorsTokens);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async deleteDebtorToken(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const { id } = req.params;
+      const { debtorName } = req.body;
+
+      if (!id && !debtorName) {
+        throw ApiError.BadRequest(`params missing`);
+      }
+      const user: any = await UsersModel.findById(id);
+      if (!user) {
+        throw ApiError.BadRequest(`user didn't exist`);
+      }
+
+      user.debtorsTokens = user.debtorsTokens.filter(
+        (token: any) => token.debtorName !== debtorName,
+      );
+
+      await user.save();
+
+      res.status(200).json(user.debtorsTokens);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async validateDebtorToken(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const token: any = req.query.token;
+      const decoded: any = jwt.verify(
+        token,
+        process.env.ACCESS_SECRET || "",
+      ) as {
+        userId: string;
+      };
+
+      if (!decoded.id || !decoded.debtorName) {
+        throw ApiError.BadRequest("can't validate token");
+      }
+
+      const debts: any = await DebtModel.find({
+        lenderId: decoded.id,
+        debtorName: decoded.debtorName,
+        isReturned: false,
+      });
+
+      const deposits: any = await DepositModel.find({
+        lenderId: decoded.id,
+        debtorName: decoded.debtorName,
+      });
+
+      let debtSum;
+      let depositSum;
+      let total;
+
+      if (debts && debts.length > 0) {
+        debtSum = debts.reduce(
+          (acc: number, debt: any) => acc + debt.refundAmount,
+          0,
+        );
+      } else {
+        debtSum = 0;
+      }
+
+      if (deposits && deposits.length > 0) {
+        depositSum = deposits.reduce(
+          (acc: number, deposit: any) => acc + deposit.depositAmount,
+          0,
+        );
+      } else {
+        depositSum = 0;
+      }
+
+      total = debtSum - depositSum;
+
+      const data = {
+        debts: debts,
+        deposits: deposits,
+        debtSum: debtSum,
+        depositSum: depositSum,
+        total: total,
+        debtorName: decoded.debtorName,
+      };
+      res.status(200).json(data);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getMyDebtorsNames(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const lenderId = req.params.id;
+      const uniqueDebtors = await DebtModel.aggregate([
+        { $match: { lenderId, isReturned: false } },
+        {
+          $group: {
+            _id: "$debtorName",
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+          },
+        },
+      ]).exec();
+
+      const debtorNames = uniqueDebtors.map((item: any) => item._id);
+
+      res.status(200).json(debtorNames);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getAllDebtorsTokens(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const { id } = req.params;
+
+      const user: any = await UsersModel.findById(id);
+      res.status(200).json(user.debtorsTokens);
     } catch (error) {
       next(error);
     }
