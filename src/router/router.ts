@@ -51,7 +51,7 @@ router.post("/login", AuthController.login);
 router.post("/add-debt", authMiddleware, DebtController.saveDebt);
 router.post("/add-deposit/:id", authMiddleware, DepositController.addDeposit);
 router.post(
-  "/get-debtor-token/:id",
+  "/add-debtor-token/:id",
   authMiddleware,
   DebtController.getTokenForDebtor,
 );

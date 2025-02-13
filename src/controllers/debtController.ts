@@ -276,11 +276,9 @@ export class DebtController {
         {
           id: user._id,
           debtorName: debtorName,
-          createdDate: date,
-          expireDate: expireDate,
+          exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 90,
         },
         process.env.JWT_SECRET || "",
-        { expiresIn: "90d" },
       );
 
       const data = {
@@ -343,15 +341,26 @@ export class DebtController {
   ) {
     try {
       const token: any = req.query.token;
-      const decoded: any = jwt.verify(
-        token,
-        process.env.ACCESS_SECRET || "",
-      ) as {
-        userId: string;
-      };
+      const decoded: any = jwt.verify(token, process.env.JWT_SECRET || "");
 
       if (!decoded.id || !decoded.debtorName) {
         throw ApiError.BadRequest("can't validate token");
+      }
+
+      const user: any = await UsersModel.findById(decoded.id);
+      if (!user) {
+        throw ApiError.BadRequest(`user didn't exist`);
+      }
+      const targetTokenInfo = user.debtorsTokens.find(
+        (token: any) => token.debtorName === decoded.debtorName,
+      );
+
+      if (
+        !targetTokenInfo ||
+        !targetTokenInfo.expireDate ||
+        targetTokenInfo.token !== token
+      ) {
+        throw ApiError.BadRequest(`something went wrong`);
       }
 
       const debts: any = await DebtModel.find({
@@ -396,6 +405,7 @@ export class DebtController {
         depositSum: depositSum,
         total: total,
         debtorName: decoded.debtorName,
+        expireDate: targetTokenInfo.expireDate,
       };
       res.status(200).json(data);
     } catch (error) {
