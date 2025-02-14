@@ -57,7 +57,7 @@ export class AuthController {
         httpOnly: true,
         secure: true,
         sameSite: "lax",
-        domain: process.env.FRONTEND_URL || '',
+        domain: "https://debtor-7a1ed.web.app",
         path: "/",
         maxAge: 30 * 24 * 60 * 60 * 1000,
       });
@@ -66,7 +66,7 @@ export class AuthController {
         httpOnly: true,
         secure: true,
         sameSite: "lax",
-        domain: process.env.FRONTEND_URL || '',
+        domain: "https://debtor-7a1ed.web.app",
         path: "/",
         maxAge: 60 * 60 * 1000,
       });
@@ -98,7 +98,7 @@ export class AuthController {
         httpOnly: true,
         secure: true,
         sameSite: "lax",
-        domain: process.env.FRONTEND_URL || '',
+        domain: "https://debtor-7a1ed.web.app",
         path: "/",
         maxAge: 30 * 24 * 60 * 60 * 1000,
       });
@@ -107,7 +107,7 @@ export class AuthController {
         httpOnly: true,
         secure: true,
         sameSite: "lax",
-        domain: process.env.FRONTEND_URL || '',
+        domain: "https://debtor-7a1ed.web.app",
         path: "/",
         maxAge: 60 * 60 * 1000,
       });
