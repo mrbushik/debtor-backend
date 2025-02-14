@@ -2,8 +2,8 @@ import express from "express";
 import morgan from "morgan";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
-import router from "./router/router";
-import { errorMiddleware } from "./middlewares/errorMiddleware";
+import router from "./src/router/router";
+import { errorMiddleware } from "./src/middlewares/errorMiddleware";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
