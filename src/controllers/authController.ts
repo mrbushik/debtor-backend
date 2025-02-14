@@ -79,7 +79,9 @@ export class AuthController {
   static async updateTokens(req: Request, res: Response, next: NextFunction) {
     try {
       const { refreshToken } = req.cookies;
+      console.log(refreshToken);
       if (!refreshToken) {
+        console.log('without tokens')
         throw ApiError.UnauthorizedError();
       }
       const decoded: any = jwt.verify(
@@ -88,6 +90,7 @@ export class AuthController {
       ) as {
         userId: string;
       };
+      console.log('decoded token')
       const userData = authService.getTokens(decoded.id);
       res.cookie("refreshToken", userData.refreshToken, {
         httpOnly: true,
