@@ -8,12 +8,8 @@ const router = Router();
 
 router.get("/", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const user = req.tokenData;
-    if (!user) {
-      res.json("bad");
-    }
     // const users = await UsersModel.find();
-    res.json(user);
+    res.json('good');
   } catch (error) {
     res.status(500).json({ message: "Ошибка сервера", error });
   }
