@@ -15,10 +15,7 @@ export class AuthController {
     try {
       const { email, password } = req.body;
 
-      const newUser: any = await authService.signUp(
-        email,
-        password,
-      );
+      const newUser: any = await authService.signUp(email, password);
       if (newUser) {
         const userData = authService.getTokens(newUser._id);
         res.cookie("refreshToken", userData.refreshToken, {
@@ -56,8 +53,7 @@ export class AuthController {
       res.cookie("refreshToken", userData.refreshToken, {
         httpOnly: true,
         secure: true,
-        sameSite: "lax",
-        domain: "https://debtor-7a1ed.web.app",
+        sameSite: "strict",
         path: "/",
         maxAge: 30 * 24 * 60 * 60 * 1000,
       });
@@ -65,15 +61,14 @@ export class AuthController {
       res.cookie("accessToken", userData.accessToken, {
         httpOnly: true,
         secure: true,
-        sameSite: "lax",
-        domain: "https://debtor-7a1ed.web.app",
+        sameSite: "strict",
         path: "/",
         maxAge: 60 * 60 * 1000,
       });
-      console.log('send tokens')
+      console.log("send tokens");
       res.status(201).json(userData.user);
     } catch (error) {
-      console.log(error)
+      console.log(error);
       next(error);
     }
   }
@@ -83,7 +78,7 @@ export class AuthController {
       const { refreshToken } = req.cookies;
       console.log(refreshToken);
       if (!refreshToken) {
-        console.log('without tokens')
+        console.log("without tokens");
         throw ApiError.UnauthorizedError();
       }
       const decoded: any = jwt.verify(
@@ -92,13 +87,12 @@ export class AuthController {
       ) as {
         userId: string;
       };
-      console.log('decoded token')
+      console.log("decoded token");
       const userData = authService.getTokens(decoded.id);
       res.cookie("refreshToken", userData.refreshToken, {
         httpOnly: true,
         secure: true,
-        sameSite: "lax",
-        domain: "https://debtor-7a1ed.web.app",
+        sameSite: "strict",
         path: "/",
         maxAge: 30 * 24 * 60 * 60 * 1000,
       });
@@ -106,8 +100,7 @@ export class AuthController {
       res.cookie("accessToken", userData.accessToken, {
         httpOnly: true,
         secure: true,
-        sameSite: "lax",
-        domain: "https://debtor-7a1ed.web.app",
+        sameSite: "strict",
         path: "/",
         maxAge: 60 * 60 * 1000,
       });
