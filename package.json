@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node dist/index.js",
-
+    "main": "node dist/index.js",
+    "build": "tsc",
+    "start": "ts-node index.ts",
     "dev": "nodemon --ext ts --exec ts-node index.ts"
   },
   "keywords": [],
