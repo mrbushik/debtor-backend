@@ -6,7 +6,7 @@ export  class UserDto {
     roles;
     isActivated;
 
-    constructor(model) {
+    constructor(model: any) {
         (this._id = model._id),
             (this.username = model.username),
             (this.email = model.email),
