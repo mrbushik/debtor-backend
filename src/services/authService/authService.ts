@@ -35,9 +35,10 @@ export class AuthService {
     if (!isMatch || !user) {
       throw ApiError.BadRequest("The username and password are incorrect");
     }
+    console.log('password and login is ok')
 
     const { refreshToken, accessToken } = this.getTokens(user._id);
-
+    console.log('generate tokens')
     return { refreshToken, accessToken, user };
   }
 

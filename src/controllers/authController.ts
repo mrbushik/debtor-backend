@@ -68,9 +68,10 @@ export class AuthController {
         path: "/",
         maxAge: 60 * 60 * 1000,
       });
-
+      console.log('send tokens')
       res.status(201).json(userData.user);
     } catch (error) {
+      console.log(error)
       next(error);
     }
   }
