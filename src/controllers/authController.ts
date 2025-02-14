@@ -2,7 +2,6 @@ import { NextFunction, Request, Response } from "express";
 import { AuthService } from "../services/authService/authService";
 import { ApiError } from "../exceptions/ApiErrors";
 import jwt from "jsonwebtoken";
-import { UserModel } from "../models/userModel";
 
 const authService = new AuthService();
 
