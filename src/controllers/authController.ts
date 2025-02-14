@@ -21,7 +21,8 @@ export class AuthController {
         res.cookie("refreshToken", userData.refreshToken, {
           httpOnly: true,
           secure: true,
-          sameSite: "none",
+          sameSite: "lax",
+          domain: ".web.app",
           path: "/",
           maxAge: 30 * 24 * 60 * 60 * 1000,
         });
@@ -29,7 +30,8 @@ export class AuthController {
         res.cookie("accessToken", userData.accessToken, {
           httpOnly: true,
           secure: true,
-          sameSite: "none",
+          sameSite: "lax",
+          domain: ".web.app",
           path: "/",
           maxAge: 60 * 60 * 1000,
         });
@@ -53,7 +55,8 @@ export class AuthController {
       res.cookie("refreshToken", userData.refreshToken, {
         httpOnly: true,
         secure: true,
-        sameSite: "strict",
+        sameSite: "lax",
+        domain: ".web.app",
         path: "/",
         maxAge: 30 * 24 * 60 * 60 * 1000,
       });
@@ -61,7 +64,8 @@ export class AuthController {
       res.cookie("accessToken", userData.accessToken, {
         httpOnly: true,
         secure: true,
-        sameSite: "strict",
+        sameSite: "lax",
+        domain: ".web.app",
         path: "/",
         maxAge: 60 * 60 * 1000,
       });
@@ -92,7 +96,8 @@ export class AuthController {
       res.cookie("refreshToken", userData.refreshToken, {
         httpOnly: true,
         secure: true,
-        sameSite: "strict",
+        sameSite: "none",
+        domain: ".web.app",
         path: "/",
         maxAge: 30 * 24 * 60 * 60 * 1000,
       });
@@ -100,7 +105,8 @@ export class AuthController {
       res.cookie("accessToken", userData.accessToken, {
         httpOnly: true,
         secure: true,
-        sameSite: "strict",
+        sameSite: "none",
+        domain: ".web.app",
         path: "/",
         maxAge: 60 * 60 * 1000,
       });
