@@ -28,15 +28,15 @@ class AuthController {
                     res.cookie("refreshToken", userData.refreshToken, {
                         httpOnly: true,
                         secure: true,
-                        sameSite: "lax",
-                        path: "/",
+                        sameSite: "none",
+                        // path: "/",
                         maxAge: 30 * 24 * 60 * 60 * 1000,
                     });
                     res.cookie("accessToken", userData.accessToken, {
                         httpOnly: true,
                         secure: true,
-                        sameSite: "lax",
-                        path: "/",
+                        sameSite: "none",
+                        // path: "/",
                         maxAge: 60 * 60 * 1000,
                     });
                 }
@@ -55,15 +55,15 @@ class AuthController {
                 res.cookie("refreshToken", userData.refreshToken, {
                     httpOnly: true,
                     secure: true,
-                    sameSite: "lax",
-                    path: "/",
+                    sameSite: "none",
+                    // path: "/",
                     maxAge: 30 * 24 * 60 * 60 * 1000,
                 });
                 res.cookie("accessToken", userData.accessToken, {
                     httpOnly: true,
                     secure: true,
-                    sameSite: "lax",
-                    path: "/",
+                    sameSite: "none",
+                    // path: "/",
                     maxAge: 60 * 60 * 1000,
                 });
                 console.log("send tokens");
@@ -91,16 +91,16 @@ class AuthController {
                     httpOnly: true,
                     secure: true,
                     sameSite: "none",
-                    domain: ".web.app",
-                    path: "/",
+                    // domain: ".web.app",
+                    // path: "/",
                     maxAge: 30 * 24 * 60 * 60 * 1000,
                 });
                 res.cookie("accessToken", userData.accessToken, {
                     httpOnly: true,
                     secure: true,
                     sameSite: "none",
-                    domain: ".web.app",
-                    path: "/",
+                    // domain: ".web.app",
+                    // path: "/",
                     maxAge: 60 * 60 * 1000,
                 });
                 res.status(200).json(decoded);
@@ -117,13 +117,13 @@ class AuthController {
                     httpOnly: true,
                     secure: true,
                     sameSite: "none",
-                    path: "/",
+                    // path: "/",
                 });
                 res.clearCookie("accessToken", {
                     httpOnly: true,
                     secure: true,
                     sameSite: "none",
-                    path: "/",
+                    // path: "/",
                 });
                 res.status(200).json({ message: "Logged out successfully" });
             }

@@ -15,26 +15,27 @@ export class AuthController {
       const { email, password } = req.body;
 
       const newUser: any = await authService.signUp(email, password);
+      const userData = authService.getTokens(newUser._id);
+
       if (newUser) {
-        const userData = authService.getTokens(newUser._id);
         res.cookie("refreshToken", userData.refreshToken, {
           httpOnly: true,
           secure: true,
-          sameSite: "lax",
-          path: "/",
+          sameSite: "none",
+          // path: "/",
           maxAge: 30 * 24 * 60 * 60 * 1000,
         });
 
         res.cookie("accessToken", userData.accessToken, {
           httpOnly: true,
           secure: true,
-          sameSite: "lax",
-          path: "/",
+          sameSite: "none",
+          // path: "/",
           maxAge: 60 * 60 * 1000,
         });
       }
 
-      res.status(201).json(newUser);
+      res.status(201).json({ newUser, userData });
     } catch (error) {
       next(error);
     }
@@ -52,20 +53,20 @@ export class AuthController {
       res.cookie("refreshToken", userData.refreshToken, {
         httpOnly: true,
         secure: true,
-        sameSite: "lax",
-        path: "/",
+        sameSite: "none",
+        // path: "/",
         maxAge: 30 * 24 * 60 * 60 * 1000,
       });
 
       res.cookie("accessToken", userData.accessToken, {
         httpOnly: true,
         secure: true,
-        sameSite: "lax",
-        path: "/",
+        sameSite: "none",
+        // path: "/",
         maxAge: 60 * 60 * 1000,
       });
       console.log("send tokens");
-      res.status(201).json(userData.user);
+      res.status(201).json(userData);
     } catch (error) {
       console.log(error);
       next(error);
@@ -74,10 +75,8 @@ export class AuthController {
 
   static async updateTokens(req: Request, res: Response, next: NextFunction) {
     try {
-      const { refreshToken } = req.cookies;
-      console.log(refreshToken);
+      const refreshToken: any = req.headers["refreshtoken"];
       if (!refreshToken) {
-        console.log("without tokens");
         throw ApiError.UnauthorizedError();
       }
       const decoded: any = jwt.verify(
@@ -86,14 +85,13 @@ export class AuthController {
       ) as {
         userId: string;
       };
-      console.log("decoded token");
       const userData = authService.getTokens(decoded.id);
       res.cookie("refreshToken", userData.refreshToken, {
         httpOnly: true,
         secure: true,
         sameSite: "none",
-        domain: ".web.app",
-        path: "/",
+        // domain: ".web.app",
+        // path: "/",
         maxAge: 30 * 24 * 60 * 60 * 1000,
       });
 
@@ -101,8 +99,8 @@ export class AuthController {
         httpOnly: true,
         secure: true,
         sameSite: "none",
-        domain: ".web.app",
-        path: "/",
+        // domain: ".web.app",
+        // path: "/",
         maxAge: 60 * 60 * 1000,
       });
 
@@ -118,13 +116,13 @@ export class AuthController {
         httpOnly: true,
         secure: true,
         sameSite: "none",
-        path: "/",
+        // path: "/",
       });
       res.clearCookie("accessToken", {
         httpOnly: true,
         secure: true,
         sameSite: "none",
-        path: "/",
+        // path: "/",
       });
       res.status(200).json({ message: "Logged out successfully" });
     } catch (error) {

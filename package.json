@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "main": "node dist/index.js",
+    "build": "tsc",
     "start": "ts-node index.ts",
     "dev": "nodemon --ext ts --exec ts-node index.ts"
   },
@@ -20,7 +21,8 @@
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.5",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "vercel": "^41.1.4"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

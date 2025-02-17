@@ -25,7 +25,8 @@ function asyncMiddleware(
 export const authMiddleware = asyncMiddleware(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const token = req.cookies.accessToken;
+      // const token = req.cookies.accessToken;
+      const token = req.headers['authorization']?.split(' ')[1]
       if (!token) {
         throw ApiError.UnauthorizedError();
       }

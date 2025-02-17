@@ -15,7 +15,7 @@ const debtController_1 = require("../controllers/debtController");
 const depositController_1 = require("../controllers/depositController");
 const authMiddleware_1 = require("../middlewares/authMiddleware");
 const router = (0, express_1.Router)();
-router.get("/", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // const users = await UsersModel.find();
         res.json('good');
