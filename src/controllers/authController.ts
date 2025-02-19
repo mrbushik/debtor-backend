@@ -1,7 +1,8 @@
 import { NextFunction, Request, Response } from "express";
+import jwt from "jsonwebtoken";
+
 import { AuthService } from "../services/authService/authService";
 import { ApiError } from "../exceptions/ApiErrors";
-import jwt from "jsonwebtoken";
 
 const authService = new AuthService();
 
@@ -17,23 +18,7 @@ export class AuthController {
       const newUser: any = await authService.signUp(email, password);
       const userData = authService.getTokens(newUser._id);
 
-      if (newUser) {
-        res.cookie("refreshToken", userData.refreshToken, {
-          httpOnly: true,
-          secure: true,
-          sameSite: "none",
-          // path: "/",
-          maxAge: 30 * 24 * 60 * 60 * 1000,
-        });
-
-        res.cookie("accessToken", userData.accessToken, {
-          httpOnly: true,
-          secure: true,
-          sameSite: "none",
-          // path: "/",
-          maxAge: 60 * 60 * 1000,
-        });
-      }
+      authService.sendTokens(res, userData);
 
       res.status(201).json({ newUser, userData });
     } catch (error) {
@@ -50,21 +35,7 @@ export class AuthController {
       const { email, password } = req.body;
       const userData = await authService.login(email, password);
 
-      res.cookie("refreshToken", userData.refreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "none",
-        // path: "/",
-        maxAge: 30 * 24 * 60 * 60 * 1000,
-      });
-
-      res.cookie("accessToken", userData.accessToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "none",
-        // path: "/",
-        maxAge: 60 * 60 * 1000,
-      });
+      authService.sendTokens(res, userData);
       console.log("send tokens");
       res.status(201).json(userData);
     } catch (error) {
@@ -86,24 +57,7 @@ export class AuthController {
         userId: string;
       };
       const userData = authService.getTokens(decoded.id);
-      res.cookie("refreshToken", userData.refreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "none",
-        // domain: ".web.app",
-        // path: "/",
-        maxAge: 30 * 24 * 60 * 60 * 1000,
-      });
-
-      res.cookie("accessToken", userData.accessToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "none",
-        // domain: ".web.app",
-        // path: "/",
-        maxAge: 60 * 60 * 1000,
-      });
-
+      authService.sendTokens(res, userData);
       res.status(200).json(userData);
     } catch (error) {
       next(error);

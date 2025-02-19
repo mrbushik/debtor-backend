@@ -2,6 +2,7 @@ import { UsersModel } from "../../models/userModel";
 import bcrypt from "bcryptjs";
 import { ApiError } from "../../exceptions/ApiErrors";
 import jwt from "jsonwebtoken";
+import {Response} from "express";
 
 export class AuthService {
   async signUp(email: string, password: string) {
@@ -60,5 +61,25 @@ export class AuthService {
     if (tokenId !== id) {
       throw ApiError.AccessRightsError();
     }
+  }
+
+    sendTokens(res: Response, userData: any) {
+    res.cookie("refreshToken", userData.refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      // domain: ".web.app",
+      // path: "/",
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
+
+    res.cookie("accessToken", userData.accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      // domain: ".web.app",
+      // path: "/",
+      maxAge: 60 * 60 * 1000,
+    });
   }
 }

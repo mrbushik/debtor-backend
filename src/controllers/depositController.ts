@@ -1,7 +1,9 @@
 import { NextFunction, Request, Response } from "express";
+
 import { DepositModel } from "../models/depositModel";
-import { AuthService } from "../services/authService/authService";
 import { IDebt } from "../models/debtModel";
+
+import { AuthService } from "../services/authService/authService";
 
 const authService = new AuthService();
 export class DepositController {
@@ -16,7 +18,7 @@ export class DepositController {
       authService.verifyOwnership(req.tokenData.id, lenderId);
 
       if (!lenderId || !debtorName || !depositAmount) {
-        res.status(400).json({ message: "Заполните все обязательные поля" });
+        res.status(400).json({ message: "Fill in all required fields" });
         return;
       }
 
@@ -57,7 +59,7 @@ export class DepositController {
       const existingDeposit = await DepositModel.findById(id);
 
       if (!existingDeposit) {
-        res.status(404).json({ message: "Запись не найдена" });
+        res.status(404).json({ message: "The record was not found" });
         return;
       }
 
@@ -65,7 +67,7 @@ export class DepositController {
         await DepositModel.findByIdAndDelete(id);
 
       if (!deletedDeposit) {
-        res.status(500).json({ message: "Ошибка удаления" });
+        res.status(500).json({ message: "Deletion error" });
         return;
       }
 

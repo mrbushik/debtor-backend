@@ -1,12 +1,15 @@
 import { NextFunction, Request, Response } from "express";
+import jwt from "jsonwebtoken";
+
 import { DebtModel, IDebt } from "../models/debtModel";
+import { DepositModel } from "../models/depositModel";
+import { DebtorTokenModel, UserModel, UsersModel } from "../models/userModel";
+
 import { DebtService } from "../services/debtService/debtService";
 import { DepositService } from "../services/depositService/depositService";
 import { AuthService } from "../services/authService/authService";
-import { DebtorTokenModel, UserModel, UsersModel } from "../models/userModel";
-import jwt, { JwtPayload } from "jsonwebtoken";
+
 import { ApiError } from "../exceptions/ApiErrors";
-import { DepositModel } from "../models/depositModel";
 
 const debtService = new DebtService();
 const depositService = new DepositService();
@@ -20,8 +23,29 @@ export class DebtController {
   ): Promise<void> {
     try {
       const { id } = req.params;
+      const { sortBy, order } = req.query as {
+        sortBy?: string;
+        order?: "asc" | "desc";
+      };
+
+      if (!id) {
+        throw ApiError.BadRequest("Missing user ID");
+      }
+      console.log("id")
+      console.log(id)
+      console.log("req.tokenData.id")
+      console.log(req.tokenData.id)
       authService.verifyOwnership(req.tokenData.id, id);
-      const debtsArr = await DebtModel.find({ lenderId: id });
+
+      let debtsArr;
+      if (!sortBy && !order) {
+        debtsArr = await DebtModel.find({ lenderId: id });
+      } else {
+        const sortOrder = order === "asc" ? 1 : -1;
+        debtsArr = await DebtModel.find({ lenderId: id }).sort({
+          ["refundAmount"]: sortOrder,
+        });
+      }
       res.status(200).json(debtsArr);
     } catch (error) {
       next(error);
@@ -36,8 +60,6 @@ export class DebtController {
     try {
       const { id } = req.params;
       const currentDebt = await debtService.getCurrentDebt(id);
-      console.log("token info");
-      console.log(req.tokenData.id);
       authService.verifyOwnership(
         req.tokenData.id,
         currentDebt?.lenderId || "",
@@ -152,7 +174,7 @@ export class DebtController {
       authService.verifyOwnership(req.tokenData.id, lenderId);
 
       if (!debtAmount || !debtorName || !lenderId || !refundAmount) {
-        res.status(400).json({ message: "Заполните все обязательные поля" });
+        res.status(400).json({ message: "Fill in all required fields" });
         return;
       }
 
@@ -182,7 +204,7 @@ export class DebtController {
       const existingDebt: IDebt | null = await DebtModel.findById(debtId);
 
       if (!existingDebt) {
-        res.status(404).json({ message: "Запись не найдена" });
+        res.status(404).json({ message: "The record was not found" });
         return;
       }
 
@@ -198,7 +220,7 @@ export class DebtController {
       );
 
       if (!updatedDebt) {
-        res.status(500).json({ message: "Ошибка обновления" });
+        res.status(500).json({ message: "Updating error" });
         return;
       }
 
@@ -219,14 +241,14 @@ export class DebtController {
       const existingDebt = await DebtModel.findById(id);
 
       if (!existingDebt) {
-        res.status(404).json({ message: "Долг не найден" });
+        res.status(404).json({ message: "Debt not found" });
         return;
       }
 
       const deletedDebt: IDebt | null = await DebtModel.findByIdAndDelete(id);
 
       if (!deletedDebt) {
-        res.status(500).json({ message: "Ошибка удаления" });
+        res.status(500).json({ message: "Deletion error" });
         return;
       }
 
@@ -357,19 +379,17 @@ export class DebtController {
         id: string;
         debtorName: string;
       };
-
-      if (  !decoded.id || !decoded.debtorName) {
+      if (!decoded.id || !decoded.debtorName) {
         throw ApiError.BadRequest("can't validate token");
       }
 
       const user: UserModel | null = await UsersModel.findById(decoded.id);
-      if (!user || user.debtorsTokens) {
+      if (!user || !user.debtorsTokens) {
         throw ApiError.BadRequest(`user didn't exist`);
       }
       const targetTokenInfo = user.debtorsTokens!.find(
         (token: DebtorTokenModel) => token.debtorName === decoded.debtorName,
       );
-
       if (
         !targetTokenInfo ||
         !targetTokenInfo.expireDate ||
