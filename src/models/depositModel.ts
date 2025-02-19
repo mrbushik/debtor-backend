@@ -1,5 +1,11 @@
 import mongoose from "mongoose";
 
+export interface  DepositModel {
+  lenderId: string;
+  debtorName: string;
+  depositAmount: number;
+}
+
 const DepositSchema = new mongoose.Schema({
   lenderId: {
     type: String,

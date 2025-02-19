@@ -3,8 +3,8 @@ import { DebtModel, IDebt } from "../models/debtModel";
 import { DebtService } from "../services/debtService/debtService";
 import { DepositService } from "../services/depositService/depositService";
 import { AuthService } from "../services/authService/authService";
-import { UsersModel } from "../models/userModel";
-import jwt from "jsonwebtoken";
+import { DebtorTokenModel, UserModel, UsersModel } from "../models/userModel";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import { ApiError } from "../exceptions/ApiErrors";
 import { DepositModel } from "../models/depositModel";
 
@@ -256,15 +256,16 @@ export class DebtController {
 
       authService.verifyOwnership(req.tokenData.id, id || "");
 
-      const user: any = await UsersModel.findById(id);
+      const user: UserModel | null = await UsersModel.findById(id);
 
       if (!user) {
         throw ApiError.BadRequest(`user didn't exist`);
       }
 
-      const currentDebtor: any = user.debtorsTokens.find(
-        (token: any) => token.debtorName === debtorName,
-      );
+      const currentDebtor: DebtorTokenModel | undefined =
+        user.debtorsTokens!.find(
+          (token: DebtorTokenModel) => token.debtorName === debtorName,
+        );
 
       if (currentDebtor) {
         await UsersModel.findByIdAndUpdate(id, {
@@ -288,16 +289,20 @@ export class DebtController {
         expireDate: expireDate,
       };
 
-      const updatedUser: any = await UsersModel.findByIdAndUpdate(
+      const updatedUser: UserModel | null = await UsersModel.findByIdAndUpdate(
         { _id: id },
         { $push: { debtorsTokens: data } },
       );
 
-      if (!updatedUser && !updatedUser.debtorsTokens) {
+      if (!updatedUser) {
         throw ApiError.BadRequest(`user update error`);
       }
 
-      const userData: any = await UsersModel.findById(id);
+      const userData: UserModel | null = await UsersModel.findById(id);
+
+      if (!userData) {
+        throw ApiError.BadRequest(`user didn't exist`);
+      }
 
       res.status(200).json(userData.debtorsTokens);
     } catch (error) {
@@ -306,26 +311,29 @@ export class DebtController {
   }
 
   static async deleteDebtorToken(
-    req: Request,
-    res: Response,
+    req: Request<{ id: string }, unknown, { debtorName: string }>,
+    res: Response<DebtorTokenModel[]>,
     next: NextFunction,
-  ) {
+  ): Promise<void> {
     try {
       const { id } = req.params;
       const { debtorName } = req.body;
 
-      if (!id && !debtorName) {
+      if (!id || !debtorName) {
         throw ApiError.BadRequest(`params missing`);
       }
-      const user: any = await UsersModel.findById(id);
+
+      const user: UserModel | null = await UsersModel.findById(id);
       if (!user) {
         throw ApiError.BadRequest(`user didn't exist`);
       }
 
-      user.debtorsTokens = user.debtorsTokens.filter(
-        (token: any) => token.debtorName !== debtorName,
-      );
+      user.debtorsTokens =
+        user.debtorsTokens!.filter(
+          (token: DebtorTokenModel) => token.debtorName !== debtorName,
+        ) || [];
 
+      //@ts-ignore
       await user.save();
 
       res.status(200).json(user.debtorsTokens);
@@ -333,26 +341,33 @@ export class DebtController {
       next(error);
     }
   }
-
   static async validateDebtorToken(
     req: Request,
     res: Response,
     next: NextFunction,
   ) {
     try {
-      const token: any = req.query.token;
-      const decoded: any = jwt.verify(token, process.env.JWT_SECRET || "");
+      const token: string = req.query.token as string;
 
-      if (!decoded.id || !decoded.debtorName) {
+      if (!token) {
         throw ApiError.BadRequest("can't validate token");
       }
 
-      const user: any = await UsersModel.findById(decoded.id);
-      if (!user) {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || "") as {
+        id: string;
+        debtorName: string;
+      };
+
+      if (  !decoded.id || !decoded.debtorName) {
+        throw ApiError.BadRequest("can't validate token");
+      }
+
+      const user: UserModel | null = await UsersModel.findById(decoded.id);
+      if (!user || user.debtorsTokens) {
         throw ApiError.BadRequest(`user didn't exist`);
       }
-      const targetTokenInfo = user.debtorsTokens.find(
-        (token: any) => token.debtorName === decoded.debtorName,
+      const targetTokenInfo = user.debtorsTokens!.find(
+        (token: DebtorTokenModel) => token.debtorName === decoded.debtorName,
       );
 
       if (
@@ -363,16 +378,20 @@ export class DebtController {
         throw ApiError.BadRequest(`something went wrong`);
       }
 
-      const debts: any = await DebtModel.find({
+      const debts: IDebt[] | null = await DebtModel.find({
         lenderId: decoded.id,
         debtorName: decoded.debtorName,
         isReturned: false,
       });
 
-      const deposits: any = await DepositModel.find({
+      const deposits: DepositModel[] | null = await DepositModel.find({
         lenderId: decoded.id,
         debtorName: decoded.debtorName,
       });
+
+      if (!debts || !deposits) {
+        throw ApiError.BadRequest(`something went wrong`);
+      }
 
       let debtSum;
       let depositSum;
@@ -380,7 +399,7 @@ export class DebtController {
 
       if (debts && debts.length > 0) {
         debtSum = debts.reduce(
-          (acc: number, debt: any) => acc + debt.refundAmount,
+          (acc: number, debt: IDebt) => acc + debt.refundAmount,
           0,
         );
       } else {
@@ -389,7 +408,7 @@ export class DebtController {
 
       if (deposits && deposits.length > 0) {
         depositSum = deposits.reduce(
-          (acc: number, deposit: any) => acc + deposit.depositAmount,
+          (acc: number, deposit: DepositModel) => acc + deposit.depositAmount,
           0,
         );
       } else {
@@ -420,7 +439,7 @@ export class DebtController {
   ) {
     try {
       const lenderId = req.params.id;
-      const uniqueDebtors = await DebtModel.aggregate([
+      const uniqueDebtors: UserModel[] | null = await DebtModel.aggregate([
         { $match: { lenderId, isReturned: false } },
         {
           $group: {
@@ -434,7 +453,7 @@ export class DebtController {
         },
       ]).exec();
 
-      const debtorNames = uniqueDebtors.map((item: any) => item._id);
+      const debtorNames = uniqueDebtors.map((item: UserModel) => item._id);
 
       res.status(200).json(debtorNames);
     } catch (error) {
@@ -450,7 +469,10 @@ export class DebtController {
     try {
       const { id } = req.params;
 
-      const user: any = await UsersModel.findById(id);
+      const user: UserModel | null = await UsersModel.findById(id);
+      if (!user) {
+        throw ApiError.BadRequest(`user didn't exist`);
+      }
       res.status(200).json(user.debtorsTokens);
     } catch (error) {
       next(error);

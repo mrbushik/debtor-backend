@@ -30,12 +30,15 @@ export const authMiddleware = asyncMiddleware(
       if (!token) {
         throw ApiError.UnauthorizedError();
       }
+      console.log(token)
       const decoded = jwt.verify(token, process.env.ACCESS_SECRET || "") as {
         userId: string;
       };
+      console.log(decoded)
       req.tokenData = decoded;
       next();
     } catch (error) {
+      console.log('middleware error')
       throw ApiError.UnauthorizedError();
     }
   },

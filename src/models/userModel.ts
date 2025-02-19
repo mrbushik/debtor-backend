@@ -4,7 +4,14 @@ export interface UserModel {
   _id: string;
   email: string;
   password: string;
-  debtorsTokens?: [];
+  debtorsTokens?: DebtorTokenModel[];
+}
+
+export interface DebtorTokenModel {
+  debtorName: string;
+  token: string;
+  createdDate: string;
+  expireDate: string;
 }
 
 const UsersSchema = new mongoose.Schema({
