@@ -31,10 +31,10 @@ export class DebtController {
       if (!id) {
         throw ApiError.BadRequest("Missing user ID");
       }
-      console.log("id")
-      console.log(id)
-      console.log("req.tokenData.id")
-      console.log(req.tokenData.id)
+      console.log("id");
+      console.log(id);
+      console.log("req.tokenData.id");
+      console.log(req.tokenData.id);
       authService.verifyOwnership(req.tokenData.id, id);
 
       let debtsArr;
@@ -494,6 +494,49 @@ export class DebtController {
         throw ApiError.BadRequest(`user didn't exist`);
       }
       res.status(200).json(user.debtorsTokens);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getDebtsForCurrentMonth(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) {
+    const { id } = req.params;
+
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+
+    const currentMonthPrefix = `${year}-${month}`;
+
+    const getInfoForMonth = await debtService.getInfoForMonth(
+      id,
+      currentMonthPrefix,
+    );
+
+    res.status(200).json(getInfoForMonth);
+  }
+
+  static async getDebtsForTargetMonth(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const { id } = req.params;
+      const { currentMonthPrefix } = req.body;
+
+      const monthName = debtService.getMonthName(currentMonthPrefix);
+
+      const getInfoForMonth = await debtService.getInfoForMonth(
+        id,
+        currentMonthPrefix,
+      );
+
+      res.status(200).json({ monthName, getInfoForMonth });
     } catch (error) {
       next(error);
     }

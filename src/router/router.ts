@@ -25,6 +25,7 @@ router.get(
   authMiddleware,
   DebtController.getActiveUserDebts,
 );
+// router.get('/debt-for-month/:id', DebtController.getDebtsForCurrentMonth)
 router.get("/overview/:id", authMiddleware, DebtController.getOverview);
 router.get("/analytics/:id", authMiddleware, DebtController.debtsAnalytics);
 router.get("/current-debt/:id", authMiddleware, DebtController.getCurrentDebt);
@@ -51,6 +52,7 @@ router.post(
   authMiddleware,
   DebtController.getTokenForDebtor,
 );
+router.post('/debts-analytics-for-month/:id', DebtController.getDebtsForTargetMonth)
 
 router.patch("/edit-debt/:id", authMiddleware, DebtController.editDebt);
 router.patch(
