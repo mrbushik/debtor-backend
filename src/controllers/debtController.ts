@@ -1,7 +1,12 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 
-import { DebtModel, IDebt } from "../models/debtModel";
+import {
+  ChartData,
+  DebtModel,
+  IDebt,
+  MonthlyRefundsModel,
+} from "../models/debtModel";
 import { DepositModel } from "../models/depositModel";
 import { DebtorTokenModel, UserModel, UsersModel } from "../models/userModel";
 
@@ -541,4 +546,112 @@ export class DebtController {
       next(error);
     }
   }
+
+  static async getAmountDebtAnalytics(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const { id } = req.params;
+
+      // const chartData: ChartData[] = await DebtModel.aggregate([
+      //   {
+      //     $match: {
+      //       lenderId: id,
+      //       withoutDetails: false,
+      //       refundAmount: { $gt: 0 },
+      //     },
+      //   },
+      //   {
+      //     $addFields: {
+      //       month: {
+      //         $substr: ["$debtDate", 0, 7],
+      //       },
+      //     },
+      //   },
+      //   {
+      //     $group: {
+      //       _id: "$month",
+      //       totalRefund: { $sum: "$refundAmount" },
+      //       debtAmount: { $sum: "$debtAmount" },
+      //     },
+      //   },
+      //   {
+      //     $sort: { _id: 1 },
+      //   },
+      // ]).exec();
+
+      const chartData: ChartData[] = await DebtModel.aggregate([
+        {
+          $match: {
+            lenderId: id,
+            withoutDetails: false,
+            refundAmount: { $gt: 0 },
+          },
+        },
+        {
+          $addFields: {
+            month: {
+              $substr: ["$debtDate", 0, 7],
+            },
+          },
+        },
+        {
+          $group: {
+            _id: "$month",
+            totalRefund: { $sum: "$refundAmount" },
+            debtAmount: { $sum: "$debtAmount" },
+            totalReturned: {
+              $sum: {
+                $cond: [{ $eq: ["$isReturned", true] }, 1, 0],
+              },
+            },
+          },
+        },
+        {
+          $sort: { _id: 1 },
+        },
+      ]).exec();
+
+      if (!chartData || chartData.length === 0) {
+        throw ApiError.BadRequest(`No data found for user`);
+      }
+
+      const startDate = new Date(chartData[0]._id + "-01");
+      const endDate = new Date(chartData[chartData.length - 1]._id + "-01");
+      const monthlyRefunds: MonthlyRefundsModel = {};
+
+      chartData.forEach((item: ChartData) => {
+        monthlyRefunds[item._id] = [
+          item.totalRefund,
+          item.debtAmount,
+          item.totalReturned,
+        ];
+      });
+
+      const monthData: string[] = [];
+      const refundAmount: number[] = [];
+      const debtAmount: number[] = [];
+      const countDebts: number[] = [];
+      const currentDate = new Date(startDate);
+
+      while (currentDate <= endDate) {
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, "0");
+        const formattedDate: string = `${year}-${month}`;
+        monthData.push(formattedDate);
+        refundAmount.push(monthlyRefunds?.[formattedDate]?.[0] ?? 0);
+        debtAmount.push(monthlyRefunds?.[formattedDate]?.[1] || 0);
+        countDebts.push(monthlyRefunds?.[formattedDate]?.[2] || 0);
+        currentDate.setMonth(currentDate.getMonth() + 1);
+      }
+
+      res.status(200).json({ refundAmount, debtAmount, monthData, countDebts });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getRefundInfo() {}
 }

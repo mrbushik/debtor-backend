@@ -6,10 +6,10 @@ import { authMiddleware } from "../middlewares/authMiddleware";
 
 const router = Router();
 
-router.get("/",  async (req: Request, res: Response) => {
+router.get("/", async (req: Request, res: Response) => {
   try {
     // const users = await UsersModel.find();
-    res.json('good');
+    res.json("good");
   } catch (error) {
     res.status(500).json({ message: "Ошибка сервера", error });
   }
@@ -42,6 +42,7 @@ router.get(
   authMiddleware,
   DebtController.getAllDebtorsTokens,
 );
+router.get("/amount-debt-analytics/:id", DebtController.getAmountDebtAnalytics);
 
 router.post("/register", AuthController.registration);
 router.post("/login", AuthController.login);
@@ -52,7 +53,11 @@ router.post(
   authMiddleware,
   DebtController.getTokenForDebtor,
 );
-router.post('/debts-analytics-for-month/:id', DebtController.getDebtsForTargetMonth)
+router.post(
+  "/debts-analytics-for-month/:id",
+  authMiddleware,
+  DebtController.getDebtsForTargetMonth,
+);
 
 router.patch("/edit-debt/:id", authMiddleware, DebtController.editDebt);
 router.patch(

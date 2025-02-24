@@ -14,6 +14,17 @@ export interface IDebt extends Document {
   earnings?: number;
 }
 
+export interface ChartData {
+  _id: string;
+  totalRefund: number;
+  debtAmount: number;
+  totalReturned: number;
+}
+
+export interface MonthlyRefundsModel {
+  [key: string]: [number, number, number];
+}
+
 const DebtSchema = new mongoose.Schema({
   debtAmount: {
     type: Number,
